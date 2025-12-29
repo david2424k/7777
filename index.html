@@ -22,37 +22,38 @@
         .overlay { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.98); padding: 20px; border-radius: 25px; border: 2px solid white; z-index: 200; display: none; text-align: center; width: 90vw; max-width: 400px; color: white; }
         .close-btn { margin-top: 15px; padding: 8px 15px; border-radius: 10px; border: none; background: white; font-weight: bold; cursor: pointer; }
 
-        .m-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
+        .m-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; min-height: 200px; position: relative; }
         .card { aspect-ratio: 3/4; cursor: pointer; position: relative; transform-style: preserve-3d; transition: 0.5s; }
         .card.flipped { transform: rotateY(180deg); }
         .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 8px; border: 1px solid white; display: flex; align-items: center; justify-content: center; }
-        .card-back { background: #222; }
+        .card-back { background: #222; font-size: 24px; }
         .card-front { transform: rotateY(180deg); overflow: hidden; }
         .card-front img { width: 100%; height: 100%; object-fit: cover; }
 
-        #catch-area { width: 100%; height: 320px; background: #111; position: relative; overflow: hidden; border-radius: 15px; margin: 10px 0; border: 1px solid #333; }
-        .target { position: absolute; width: 50px; height: 50px; border-radius: 50%; border: 2px solid white; overflow: hidden; }
+        .snow-particle { position: absolute; background: white; border-radius: 50%; pointer-events: none; z-index: 205; }
+        
+        #m-ctrl { position: fixed; top: 20px; right: 20px; z-index: 1100; width: 50px; height: 50px; background: rgba(255,255,255,0.3); border: 2px solid white; border-radius: 50%; display: none; align-items: center; justify-content: center; color: white; cursor: pointer; font-size: 24px; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); background: rgba(255,255,255,0.5); } 100% { transform: scale(1); } }
+
+        #catch-area { width: 100%; height: 350px; background: #111; position: relative; overflow: hidden; border-radius: 15px; margin: 10px 0; border: 1px solid #333; }
+        .target { position: absolute; width: 60px; height: 60px; border-radius: 50%; border: 2px solid white; overflow: hidden; cursor: pointer; }
         .target img { width: 100%; height: 100%; object-fit: cover; }
 
-        #photo-clicker { width: 140px; height: 140px; margin: 15px auto; cursor: pointer; border-radius: 50%; border: 4px solid white; overflow: hidden; transition: 0.1s; display: block; }
+        #photo-clicker { width: 140px; height: 140px; margin: 15px auto; cursor: pointer; border-radius: 50%; border: 4px solid white; overflow: hidden; }
         #photo-clicker img { width: 100%; height: 100%; object-fit: cover; }
         .bar { width: 100%; height: 12px; background: #333; border-radius: 10px; overflow: hidden; margin-top: 10px; }
-        #fill { width: 0%; height: 100%; background: #ff4d4d; transition: width 0.1s; }
+        #fill { width: 0%; height: 100%; background: #ff4d4d; }
 
-        #maze { width: 280px; height: 280px; background: #111; margin: 10px auto; position: relative; border: 2px solid #555; touch-action: none; }
-        .wall { position: absolute; background: white; box-shadow: 0 0 5px white; }
-        #dot { position: absolute; width: 18px; height: 18px; background: #00f0ff; border-radius: 50%; box-shadow: 0 0 10px #00f0ff; z-index: 10; }
+        #maze { width: 280px; height: 280px; background: #111; margin: 10px auto; position: relative; border: 2px solid #555; }
+        .wall { position: absolute; background: white; }
+        #dot { position: absolute; width: 18px; height: 18px; background: #00f0ff; border-radius: 50%; z-index: 10; }
 
-        #special-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; color: black; padding: 25px; border-radius: 25px; text-align: center; display: none; z-index: 3000; box-shadow: 0 0 40px white; }
-        #m-ctrl { position: fixed; top: 20px; right: 20px; z-index: 1100; width: 44px; height: 44px; background: rgba(255,255,255,0.2); border: 1px solid white; border-radius: 50%; display: none; align-items: center; justify-content: center; color: white; cursor: pointer; }
+        #special-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; color: black; padding: 25px; border-radius: 25px; text-align: center; display: none; z-index: 3000; }
     </style>
 </head>
 <body>
 
-<audio id="bg-audio" loop>
-    <source src="https://ia800904.us.archive.org/21/items/JingleBells_201602/Jingle%20Bells.mp3" type="audio/mpeg">
-</audio>
-<div id="m-ctrl" onclick="toggleM()">🔊</div>
+<div id="m-ctrl" onclick="toggleM()">🔇</div>
 
 <div id="login-screen">
     <div class="login-panel">
@@ -77,7 +78,7 @@
 <div id="ov1" class="overlay"><h3>НАЙДИ ПАРЫ</h3><div class="m-grid" id="g1-grid"></div><button class="close-btn" onclick="closeAll()">ЗАКРЫТЬ</button></div>
 <div id="ov2" class="overlay"><h3>ЛОВИ ФОТО</h3><div id="catch-area"></div><p id="c-count">Собрано: 0</p><button class="close-btn" onclick="stopG2()">ЗАКРЫТЬ</button></div>
 <div id="ov3" class="overlay">
-    <h3 style="font-size: 15px;">ЧЕМ БОЛЬШЕ ЛЮБИШЬ — ТЕМ БЫСТРЕЕ ЖМИ!</h3>
+    <h3 style="font-size: 15px;">ЖМИ БЫСТРЕЕ!</h3>
     <p id="t3">Время: 10</p>
     <div id="photo-clicker" onpointerdown="tapG()"><img src="img/02.jpg"></div>
     <div class="bar"><div id="fill"></div></div>
@@ -92,28 +93,49 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 <script>
 let money = 0, g2Int, taps = 0, timer3;
-const audio = document.getElementById('bg-audio');
+let audio = new Audio();
+// Самая стабильная романтичная мелодия (Piano)
+audio.src = "https://www.chosic.com/wp-content/uploads/2021/04/Warm-Memories-Emotional-Inspiring-Piano.mp3";
+audio.loop = true;
+audio.crossOrigin = "anonymous";
 
-// ИЗМЕНЕННЫЕ ПАРОЛИ ТУТ
 function doLogin() {
-    const enteredPass = document.getElementById('pw').value;
-    if(enteredPass === '012330' || enteredPass === '2009') {
+    const p = document.getElementById('pw').value;
+    if(p === '012330' || p === '2009') {
         document.getElementById('login-screen').style.display='none';
         document.getElementById('ui-layer').style.display='flex';
         document.getElementById('m-ctrl').style.display='flex';
-        audio.play().catch(() => {});
+        
+        // Попытка запустить музыку после клика по кнопке
+        tryToPlay();
     } else { alert("Неверно"); }
 }
 
-function toggleM() {
-    if(audio.paused) { audio.play(); document.getElementById('m-ctrl').innerText='🔊'; }
-    else { audio.pause(); document.getElementById('m-ctrl').innerText='🔇'; }
+function tryToPlay() {
+    audio.play().then(() => {
+        document.getElementById('m-ctrl').innerText = '🔊';
+        document.getElementById('m-ctrl').style.animation = 'none';
+    }).catch(() => {
+        // Если заблокировано, кнопка будет мигать
+        document.getElementById('m-ctrl').innerText = '🔇';
+    });
 }
 
-// СНЕГ
+function toggleM() {
+    if(audio.paused) { 
+        audio.play(); 
+        document.getElementById('m-ctrl').innerText='🔊';
+        document.getElementById('m-ctrl').style.animation = 'none';
+    } else { 
+        audio.pause(); 
+        document.getElementById('m-ctrl').innerText='🔇'; 
+    }
+}
+
+// Снег на фоне
 const canvas = document.getElementById('snow'), ctx = canvas.getContext('2d');
 let w = canvas.width = innerWidth, h = canvas.height = innerHeight;
-const flakes = Array.from({length: 120}, () => ({ x: Math.random()*w, y: Math.random()*h, r: Math.random()*2+1, v: Math.random()*1+0.5 }));
+const flakes = Array.from({length: 100}, () => ({ x: Math.random()*w, y: Math.random()*h, r: Math.random()*2+1, v: Math.random()*1+0.5 }));
 function draw() {
     ctx.clearRect(0,0,w,h); ctx.fillStyle="white";
     flakes.forEach(f => { f.y += f.v; if(f.y > h) f.y = -10; ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, Math.PI*2); ctx.fill(); });
@@ -121,23 +143,49 @@ function draw() {
 }
 draw();
 
+// Анимация распада в снег (Игра 1)
+function disintegrateToSnow(element) {
+    const rect = element.getBoundingClientRect();
+    for (let i = 0; i < 25; i++) {
+        const p = document.createElement('div');
+        p.className = 'snow-particle';
+        const size = Math.random() * 4 + 2;
+        p.style.width = size + 'px'; p.style.height = size + 'px';
+        p.style.left = (rect.left + Math.random() * rect.width) + 'px';
+        p.style.top = (rect.top + Math.random() * rect.height) + 'px';
+        document.body.appendChild(p);
+        gsap.to(p, {
+            x: (Math.random() - 0.5) * 200,
+            y: rect.height + Math.random() * 200,
+            opacity: 0,
+            duration: 2,
+            onComplete: () => p.remove()
+        });
+    }
+    gsap.to(element, { opacity: 0, scale: 0, duration: 0.5 });
+}
+
 function openG1() {
     closeAll(); document.getElementById('ov1').style.display='block';
     const grid = document.getElementById('g1-grid'); grid.innerHTML = '';
-    // Список картинок (проверьте расширения .jpeg или .jpg в вашей папке img)
     const imgs = ['img/1.jpeg', 'img/1.jpeg', 'img/2.jpeg', 'img/2.jpeg', 'img/3.jpeg', 'img/3.jpeg', 'img/4.jpeg', 'img/4.jpeg'].sort(() => Math.random() - 0.5);
     let flipped = [];
+    let found = 0;
     imgs.forEach(src => {
         const c = document.createElement('div'); c.className = 'card';
         c.innerHTML = `<div class="card-face card-back">❄️</div><div class="card-face card-front"><img src="${src}"></div>`;
         c.onclick = () => {
-            if(flipped.length < 2 && !c.classList.contains('flipped')) {
+            if(flipped.length < 2 && !c.classList.contains('flipped') && !c.dataset.done) {
                 c.classList.add('flipped'); flipped.push(c);
                 if(flipped.length === 2) {
                     if(flipped[0].querySelector('img').src === flipped[1].querySelector('img').src) {
-                        money += 20; updateBal(); flipped = [];
-                        if(document.querySelectorAll('.flipped').length === 8) setTimeout(closeAll, 1000);
-                    } else { setTimeout(() => { flipped.forEach(i=>i.classList.remove('flipped')); flipped=[]; }, 600); }
+                        money += 20; updateBal(); found++;
+                        const pair = [...flipped]; flipped = [];
+                        setTimeout(() => {
+                            pair.forEach(card => { card.dataset.done="true"; disintegrateToSnow(card); });
+                            if(found === 4) setTimeout(closeAll, 1200);
+                        }, 500);
+                    } else { setTimeout(() => { flipped.forEach(i=>i.classList.remove('flipped')); flipped=[]; }, 800); }
                 }
             }
         };
@@ -149,13 +197,15 @@ function openG2() {
     closeAll(); document.getElementById('ov2').style.display='block';
     const area = document.getElementById('catch-area'); area.innerHTML = '';
     let count = 0;
+    const myPhotos = ['img/1.jpeg', 'img/2.jpeg', 'img/3.jpeg', 'img/4.jpeg', 'img/5.jpeg', 'img/02.jpg'];
     g2Int = setInterval(() => {
         const t = document.createElement('div'); t.className = 'target';
-        t.style.left = Math.random()*85+'%'; t.style.top = '-60px';
-        t.innerHTML = `<img src="img/5.jpeg">`; area.appendChild(t);
-        gsap.to(t, { y: 380, duration: 2.2, ease:"none", onComplete: () => t.remove() });
-        t.onpointerdown = () => { money += 5; updateBal(); count++; t.remove(); document.getElementById('c-count').innerText=`Собрано: ${count}`; };
-    }, 850);
+        t.style.left = Math.random()*80+'%'; t.style.top = '-70px';
+        t.innerHTML = `<img src="${myPhotos[Math.floor(Math.random()*myPhotos.length)]}">`;
+        area.appendChild(t);
+        gsap.to(t, { y: 450, rotation: 360, duration: 2.5, ease:"none", onComplete: () => t.remove() });
+        t.onpointerdown = () => { money+=5; updateBal(); count++; document.getElementById('c-count').innerText=`Собрано: ${count}`; t.remove(); };
+    }, 700);
 }
 function stopG2() { clearInterval(g2Int); closeAll(); }
 
