@@ -11,7 +11,7 @@
         #login-screen { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 1000; background: #000; }
         .login-panel { background: rgba(255,255,255,0.95); padding: 30px; border-radius: 30px; text-align: center; width: 85%; max-width: 320px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         input { padding: 15px; border-radius: 12px; border: 2px solid #eee; width: 100%; box-sizing: border-box; margin-bottom: 20px; text-align: center; font-size: 18px; outline: none; -webkit-appearance: none; }
-        .login-panel button { background: #222; color: white; border: none; padding: 15px; border-radius: 12px; width: 100%; font-weight: bold; cursor: pointer; active { opacity: 0.7; } }
+        .login-panel button { background: #222; color: white; border: none; padding: 15px; border-radius: 12px; width: 100%; font-weight: bold; cursor: pointer; }
 
         #ui-layer { position: absolute; inset: 0; z-index: 10; display: none; flex-direction: column; align-items: center; justify-content: center; }
         .main-title { color: white; font-size: clamp(24px, 8vw, 40px); font-weight: bold; margin-bottom: 15px; text-align: center; text-shadow: 0 0 15px white; }
@@ -20,8 +20,6 @@
         .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; width: 90%; max-width: 450px; }
         .btn { background: rgba(255, 255, 255, 0.1); border: 2px solid white; color: white; padding: 20px 5px; border-radius: 15px; cursor: pointer; text-align: center; font-weight: bold; font-size: 14px; backdrop-filter: blur(10px); will-change: transform; }
         .btn:active { transform: scale(0.95); }
-
-        #music-btn { position: fixed; top: 20px; right: 20px; z-index: 2000; background: rgba(255,255,255,0.2); border: 1px solid white; color: white; width: 44px; height: 44px; border-radius: 50%; display: none; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(5px); }
 
         .overlay { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.98); padding: 20px; border-radius: 25px; border: 2px solid white; z-index: 200; display: none; text-align: center; width: 90vw; max-width: 400px; color: white; }
         .close-btn { margin-top: 15px; padding: 12px 25px; border-radius: 12px; border: none; background: white; font-weight: bold; cursor: pointer; color: black; }
@@ -57,11 +55,6 @@
         <button onpointerdown="doLogin()">ВОЙТИ</button>
     </div>
 </div>
-
-<div id="music-btn" onpointerdown="toggleMusic()">🎵</div>
-<audio id="bg-music" loop preload="auto">
-    <source src="music/bg.mp3" type="audio/mpeg">
-</audio>
 
 <div id="win-popup">
     <h2 style="color:#ff4d4d;">ПОБЕДА! ❤️</h2>
@@ -106,25 +99,15 @@
 <script>
 let money = 0, g2Int, taps = 0, timer3;
 const allPhotos = ['img/1.jpeg', 'img/2.jpeg', 'img/3.jpeg', 'img/4.jpeg', 'img/5.jpeg', 'img/02.jpg'];
-const music = document.getElementById('bg-music');
-const mBtn = document.getElementById('music-btn');
 
 function doLogin() {
     const val = document.getElementById('pw').value;
     if(val === '012330' || val === '2009') {
         document.getElementById('login-screen').style.display='none';
         document.getElementById('ui-layer').style.display='flex';
-        mBtn.style.display = 'flex';
-        music.play().catch(() => {});
     } else alert("Неверно");
 }
 
-function toggleMusic() {
-    if (music.paused) { music.play(); mBtn.innerText = '🎵'; }
-    else { music.pause(); mBtn.innerText = '🔇'; }
-}
-
-// Оптимизированный снег
 const canvas = document.getElementById('snow'), ctx = canvas.getContext('2d');
 let w = canvas.width = innerWidth, h = canvas.height = innerHeight;
 let flakes = Array.from({length: 50}, () => ({ 
@@ -137,7 +120,7 @@ function drawSnow() {
     for(let i=0; i<flakes.length; i++) {
         let f = flakes[i];
         f.y += f.v;
-        f.x += Math.sin(f.y/30 + f.offset) * 0.5; // Плавное покачивание
+        f.x += Math.sin(f.y/30 + f.offset) * 0.5;
         if(f.y > h) f.y = -10;
         ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, Math.PI*2); ctx.fill();
     }
@@ -165,7 +148,7 @@ function openG1() {
     imgs.forEach(src => {
         const c = document.createElement('div'); c.className = 'card';
         c.innerHTML = `<div class="card-face card-back">❄️</div><div class="card-face card-front"><img src="${src}"></div>`;
-        c.onpointerdown = (e) => {
+        c.onpointerdown = () => {
             if(flipped.length < 2 && !c.classList.contains('flipped')) {
                 c.classList.add('flipped'); flipped.push(c);
                 if(flipped.length === 2) {
@@ -203,8 +186,7 @@ function openG3() {
 }
 function tapG() {
     taps++; 
-    const fill = document.getElementById('fill');
-    fill.style.width = (Math.min(taps, 40)/40)*100 + '%';
+    document.getElementById('fill').style.width = (Math.min(taps, 40)/40)*100 + '%';
     gsap.fromTo("#photo-clicker", {scale:0.95}, {scale:1, duration:0.1});
     if(taps === 40) { 
         clearInterval(timer3); money += 100; updateBal(); closeAll(); 
@@ -245,7 +227,6 @@ function closeWinPopup() {
 }
 function closeAll() { document.querySelectorAll('.overlay').forEach(o => o.style.display='none'); clearInterval(g2Int); clearInterval(timer3); }
 function updateBal() { document.getElementById('bal').innerText = money; }
-
 window.addEventListener('resize', () => { w = canvas.width = innerWidth; h = canvas.height = innerHeight; });
 </script>
 </body>
