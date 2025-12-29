@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>For My Favorite</title>
     <style>
-        body, html { margin: 0; padding: 0; background: #050505; overflow: hidden; font-family: 'Segoe UI', sans-serif; touch-action: none; user-select: none; }
+        /* Добавлена блокировка прокрутки для корректной работы игр на телефоне */
+        body, html { margin: 0; padding: 0; background: #050505; overflow: hidden; font-family: 'Segoe UI', sans-serif; touch-action: none; user-select: none; -webkit-tap-highlight-color: transparent; }
         canvas { position: absolute; top: 0; left: 0; z-index: 1; pointer-events: none; will-change: transform; }
         
         #login-screen { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 1000; background: #000; }
@@ -38,9 +39,10 @@
         .bar { width: 100%; height: 12px; background: #333; border-radius: 10px; overflow: hidden; margin-top: 10px; }
         #fill { width: 0%; height: 100%; background: #ff4d4d; transition: width 0.1s; }
 
+        /* Обязательно touch-action: none для работы на сенсорах */
         #maze { width: 280px; height: 280px; background: #0a0a0a; margin: 10px auto; position: relative; border: 2px solid #ff85a2; border-radius: 10px; touch-action: none; }
         .wall { position: absolute; background: #ff85a2; box-shadow: 0 0 8px #ff85a2; }
-        #dot { position: absolute; width: 20px; height: 20px; background: #fff; border-radius: 50%; z-index: 10; box-shadow: 0 0 10px #fff; will-change: transform; }
+        #dot { position: absolute; width: 20px; height: 20px; background: #fff; border-radius: 50%; z-index: 10; box-shadow: 0 0 10px #fff; will-change: transform; pointer-events: none; }
 
         #win-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0); background: white; color: black; padding: 30px; border-radius: 30px; text-align: center; display: none; z-index: 3000; width: 260px; box-shadow: 0 0 50px rgba(255,255,255,0.3); }
         #special-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; color: black; padding: 25px; border-radius: 25px; text-align: center; display: none; z-index: 3000; }
@@ -79,7 +81,7 @@
 <div id="ov1" class="overlay"><h3>НАЙДИ ПАРЫ</h3><div class="m-grid" id="g1-grid"></div><button class="close-btn" onpointerdown="closeAll()">ЗАКРЫТЬ</button></div>
 <div id="ov2" class="overlay"><h3>ЛОВИ ФОТО</h3><div id="catch-area" style="height:320px; position:relative; overflow:hidden; background:#111; border-radius:15px; touch-action:none;"></div><p id="c-count">Собрано: 0</p><button class="close-btn" onpointerdown="stopG2()">ЗАКРЫТЬ</button></div>
 <div id="ov3" class="overlay">
-    <h3 style="font-size: 15px; color:#ff85a2;">Твоё сердечко бьётся ради меня?<br>Докажи это частыми касаниями! ❤️</h3>
+    <h3 style="font-size: 15px; color:#ff85a2;">Твоё сердечко бьётся ради меня? ❤️</h3>
     <p id="t3">Время любви: 10</p>
     <div id="photo-clicker" onpointerdown="tapG()"><img src="img/02.jpg"></div>
     <div class="bar"><div id="fill"></div></div>
@@ -97,8 +99,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 <script>
-let money = 0, g2Int, taps = 0, timer3;
-let foundPairs = 0; // Счетчик для 1 игры
+let money = 0, g2Int, taps = 0, timer3, foundPairs = 0;
 const allPhotos = ['img/1.jpeg', 'img/2.jpeg', 'img/3.jpeg', 'img/4.jpeg', 'img/5.jpeg', 'img/02.jpg'];
 
 function doLogin() {
@@ -109,7 +110,6 @@ function doLogin() {
     } else alert("Неверно");
 }
 
-// Снег
 const canvas = document.getElementById('snow'), ctx = canvas.getContext('2d');
 let w = canvas.width = innerWidth, h = canvas.height = innerHeight;
 let flakes = Array.from({length: 50}, () => ({ 
@@ -119,10 +119,8 @@ let flakes = Array.from({length: 50}, () => ({
 function drawSnow() {
     ctx.clearRect(0,0,w,h); 
     ctx.fillStyle="white";
-    for(let i=0; i<flakes.length; i++) {
-        let f = flakes[i];
-        f.y += f.v;
-        f.x += Math.sin(f.y/30 + f.offset) * 0.5;
+    for(let f of flakes) {
+        f.y += f.v; f.x += Math.sin(f.y/30 + f.offset) * 0.5;
         if(f.y > h) f.y = -10;
         ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, Math.PI*2); ctx.fill();
     }
@@ -134,15 +132,13 @@ function disintegrate(el) {
     const r = el.getBoundingClientRect();
     for(let i=0; i<15; i++){
         const p = document.createElement('div'); p.className = 'snow-particle';
-        p.style.width = p.style.height = Math.random()*5+2+'px';
-        p.style.left = r.left + Math.random()*r.width+'px'; p.style.top = r.top + Math.random()*r.height+'px';
+        p.style.cssText = `width:${Math.random()*5+2}px; height:${Math.random()*5+2}px; left:${r.left + Math.random()*r.width}px; top:${r.top + Math.random()*r.height}px;`;
         document.body.appendChild(p);
         gsap.to(p, { x: (Math.random()-0.5)*150, y: 150, opacity: 0, duration: 1, onComplete: () => p.remove() });
     }
     gsap.to(el, { opacity: 0, scale: 0.5, duration: 0.4 });
 }
 
-// Игра 1: Фото-пары
 function openG1() {
     closeAll(); document.getElementById('ov1').style.display='block';
     foundPairs = 0;
@@ -160,12 +156,7 @@ function openG1() {
                         money += 20; foundPairs++; updateBal();
                         const p = [...flipped]; flipped = [];
                         setTimeout(() => p.forEach(card => disintegrate(card)), 500);
-                        // Проверка победы в 1 игре
-                        if(foundPairs === 4) {
-                            setTimeout(() => {
-                                showWinPopup("ТЫ НАШЛА ВСЕ ПАРЫ! ❤️", "Твои глаза самые внимательные...");
-                            }, 1000);
-                        }
+                        if(foundPairs === 4) setTimeout(() => showWinPopup("ТЫ НАШЛА ВСЕ ПАРЫ! ❤️", "Твои глаза самые внимательные..."), 1000);
                     } else setTimeout(() => { flipped.forEach(i=>i.classList.remove('flipped')); flipped=[]; }, 700);
                 }
             }
@@ -179,7 +170,7 @@ function openG2() {
     const area = document.getElementById('catch-area'); area.innerHTML = '';
     let count = 0;
     g2Int = setInterval(() => {
-        const t = document.createElement('div'); t.style.cssText = "position:absolute; width:60px; height:60px; border-radius:50%; border:2px solid white; overflow:hidden; will-change: transform;";
+        const t = document.createElement('div'); t.style.cssText = "position:absolute; width:60px; height:60px; border-radius:50%; border:2px solid white; overflow:hidden;";
         t.style.left = Math.random()*80+'%'; t.style.top = '-70px';
         t.innerHTML = `<img src="${allPhotos[Math.floor(Math.random()*allPhotos.length)]}" style="width:100%;height:100%;object-fit:cover;">`;
         area.appendChild(t);
@@ -195,8 +186,7 @@ function openG3() {
     let left = 10; timer3 = setInterval(() => { left--; document.getElementById('t3').innerText = `Время любви: ${left}`; if(left <= 0) { clearInterval(timer3); closeAll(); } }, 1000);
 }
 function tapG() {
-    taps++; 
-    document.getElementById('fill').style.width = (Math.min(taps, 40)/40)*100 + '%';
+    taps++; document.getElementById('fill').style.width = (Math.min(taps, 40)/40)*100 + '%';
     gsap.fromTo("#photo-clicker", {scale:0.95}, {scale:1, duration:0.1});
     if(taps === 40) { 
         clearInterval(timer3); money += 100; updateBal(); closeAll(); 
@@ -217,42 +207,36 @@ function openG4() {
     });
 }
 
-document.getElementById('maze').onpointermove = (e) => {
+// Улучшенное управление для телефона (Touch events)
+const maze = document.getElementById('maze');
+const moveHandler = (e) => {
     if(document.getElementById('ov4').style.display !== 'block') return;
-    const r = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - r.left - 10;
-    const y = e.clientY - r.top - 10;
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const r = maze.getBoundingClientRect();
+    const x = clientX - r.left - 10;
+    const y = clientY - r.top - 10;
     if(x > 0 && x < 260 && y > 0 && y < 260) {
         dot.style.left = x+'px'; dot.style.top = y+'px';
-        if(x > 230 && y > 230) { 
-            money += 150; updateBal(); 
-            showWinPopup("ДОШЛА ДО СЕРДЦА ❤️", "Ты прошла этот путь ко мне!");
-        }
+        if(x > 230 && y > 230) { money += 150; updateBal(); showWinPopup("ДОШЛА ДО СЕРДЦА ❤️", "Ты прошла этот путь ко мне!"); }
     }
 };
+maze.addEventListener('touchmove', moveHandler, {passive: false});
+maze.addEventListener('mousemove', moveHandler);
 
-// Функция показа окна победы
 function showWinPopup(title, text) {
     const p = document.getElementById('win-popup');
-    document.getElementById('win-title').innerText = title || "ПОБЕДА! ❤️";
-    document.getElementById('win-text').innerText = text || "Ты дошла до моего сердца!";
+    document.getElementById('win-title').innerText = title;
+    document.getElementById('win-text').innerText = text;
     p.style.display = 'block';
     gsap.to(p, { scale: 1, duration: 0.5, ease: "back.out(1.7)" });
 }
 
 function closeWinPopup() {
-    gsap.to("#win-popup", { scale: 0, duration: 0.3, onComplete: () => { 
-        document.getElementById('win-popup').style.display = 'none'; 
-        closeAll(); 
-    }});
+    gsap.to("#win-popup", { scale: 0, duration: 0.3, onComplete: () => { document.getElementById('win-popup').style.display = 'none'; closeAll(); }});
 }
 
-function closeAll() { 
-    document.querySelectorAll('.overlay').forEach(o => o.style.display='none'); 
-    clearInterval(g2Int); 
-    clearInterval(timer3); 
-}
-
+function closeAll() { document.querySelectorAll('.overlay').forEach(o => o.style.display='none'); clearInterval(g2Int); clearInterval(timer3); }
 function updateBal() { document.getElementById('bal').innerText = money; }
 window.addEventListener('resize', () => { w = canvas.width = innerWidth; h = canvas.height = innerHeight; });
 </script>
