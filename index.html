@@ -57,9 +57,9 @@
 </div>
 
 <div id="win-popup">
-    <h2 style="color:#ff4d4d;">ПОБЕДА! ❤️</h2>
-    <p>Ты дошла до моего сердца!</p>
-    <div style="font-size: 50px; margin: 10px 0;">🥰</div>
+    <h2 id="win-title" style="color:#ff4d4d;">ПОБЕДА! ❤️</h2>
+    <p id="win-text">Ты дошла до моего сердца!</p>
+    <div id="win-emoji" style="font-size: 50px; margin: 10px 0;">🥰</div>
     <button class="close-btn" style="background: #222; color: white; width: 100%;" onpointerdown="closeWinPopup()">СУПЕР!</button>
 </div>
 
@@ -98,6 +98,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 <script>
 let money = 0, g2Int, taps = 0, timer3;
+let foundPairs = 0; // Счетчик для 1 игры
 const allPhotos = ['img/1.jpeg', 'img/2.jpeg', 'img/3.jpeg', 'img/4.jpeg', 'img/5.jpeg', 'img/02.jpg'];
 
 function doLogin() {
@@ -108,6 +109,7 @@ function doLogin() {
     } else alert("Неверно");
 }
 
+// Снег
 const canvas = document.getElementById('snow'), ctx = canvas.getContext('2d');
 let w = canvas.width = innerWidth, h = canvas.height = innerHeight;
 let flakes = Array.from({length: 50}, () => ({ 
@@ -140,8 +142,10 @@ function disintegrate(el) {
     gsap.to(el, { opacity: 0, scale: 0.5, duration: 0.4 });
 }
 
+// Игра 1: Фото-пары
 function openG1() {
     closeAll(); document.getElementById('ov1').style.display='block';
+    foundPairs = 0;
     const grid = document.getElementById('g1-grid'); grid.innerHTML = '';
     const imgs = [allPhotos[0], allPhotos[0], allPhotos[1], allPhotos[1], allPhotos[2], allPhotos[2], allPhotos[3], allPhotos[3]].sort(() => Math.random() - 0.5);
     let flipped = [];
@@ -153,9 +157,15 @@ function openG1() {
                 c.classList.add('flipped'); flipped.push(c);
                 if(flipped.length === 2) {
                     if(flipped[0].querySelector('img').src === flipped[1].querySelector('img').src) {
-                        money += 20; updateBal();
+                        money += 20; foundPairs++; updateBal();
                         const p = [...flipped]; flipped = [];
                         setTimeout(() => p.forEach(card => disintegrate(card)), 500);
+                        // Проверка победы в 1 игре
+                        if(foundPairs === 4) {
+                            setTimeout(() => {
+                                showWinPopup("ТЫ НАШЛА ВСЕ ПАРЫ! ❤️", "Твои глаза самые внимательные...");
+                            }, 1000);
+                        }
                     } else setTimeout(() => { flipped.forEach(i=>i.classList.remove('flipped')); flipped=[]; }, 700);
                 }
             }
@@ -214,18 +224,35 @@ document.getElementById('maze').onpointermove = (e) => {
     const y = e.clientY - r.top - 10;
     if(x > 0 && x < 260 && y > 0 && y < 260) {
         dot.style.left = x+'px'; dot.style.top = y+'px';
-        if(x > 230 && y > 230) { money += 150; updateBal(); showWinPopup(); }
+        if(x > 230 && y > 230) { 
+            money += 150; updateBal(); 
+            showWinPopup("ДОШЛА ДО СЕРДЦА ❤️", "Ты прошла этот путь ко мне!");
+        }
     }
 };
 
-function showWinPopup() {
-    const p = document.getElementById('win-popup'); p.style.display = 'block';
+// Функция показа окна победы
+function showWinPopup(title, text) {
+    const p = document.getElementById('win-popup');
+    document.getElementById('win-title').innerText = title || "ПОБЕДА! ❤️";
+    document.getElementById('win-text').innerText = text || "Ты дошла до моего сердца!";
+    p.style.display = 'block';
     gsap.to(p, { scale: 1, duration: 0.5, ease: "back.out(1.7)" });
 }
+
 function closeWinPopup() {
-    gsap.to("#win-popup", { scale: 0, duration: 0.3, onComplete: () => { document.getElementById('win-popup').style.display = 'none'; closeAll(); }});
+    gsap.to("#win-popup", { scale: 0, duration: 0.3, onComplete: () => { 
+        document.getElementById('win-popup').style.display = 'none'; 
+        closeAll(); 
+    }});
 }
-function closeAll() { document.querySelectorAll('.overlay').forEach(o => o.style.display='none'); clearInterval(g2Int); clearInterval(timer3); }
+
+function closeAll() { 
+    document.querySelectorAll('.overlay').forEach(o => o.style.display='none'); 
+    clearInterval(g2Int); 
+    clearInterval(timer3); 
+}
+
 function updateBal() { document.getElementById('bal').innerText = money; }
 window.addEventListener('resize', () => { w = canvas.width = innerWidth; h = canvas.height = innerHeight; });
 </script>
