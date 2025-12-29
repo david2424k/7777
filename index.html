@@ -94,8 +94,10 @@
 let money = 0, g2Int, taps = 0, timer3;
 const audio = document.getElementById('bg-audio');
 
+// ИЗМЕНЕННЫЕ ПАРОЛИ ТУТ
 function doLogin() {
-    if(document.getElementById('pw').value === '012330' || document.getElementById('pw').value === '2009') {
+    const enteredPass = document.getElementById('pw').value;
+    if(enteredPass === '012330' || enteredPass === '2009') {
         document.getElementById('login-screen').style.display='none';
         document.getElementById('ui-layer').style.display='flex';
         document.getElementById('m-ctrl').style.display='flex';
@@ -122,6 +124,7 @@ draw();
 function openG1() {
     closeAll(); document.getElementById('ov1').style.display='block';
     const grid = document.getElementById('g1-grid'); grid.innerHTML = '';
+    // Список картинок (проверьте расширения .jpeg или .jpg в вашей папке img)
     const imgs = ['img/1.jpeg', 'img/1.jpeg', 'img/2.jpeg', 'img/2.jpeg', 'img/3.jpeg', 'img/3.jpeg', 'img/4.jpeg', 'img/4.jpeg'].sort(() => Math.random() - 0.5);
     let flipped = [];
     imgs.forEach(src => {
@@ -205,5 +208,4 @@ function updateBal() { document.getElementById('bal').innerText = money; }
 window.onresize = () => { w = canvas.width = innerWidth; h = canvas.height = innerHeight; };
 </script>
 </body>
-
 </html>
