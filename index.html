@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>For My Favorite</title>
+    <style>
+        body, html { margin: 0; padding: 0; background: #050505; overflow: hidden; font-family: 'Segoe UI', sans-serif; touch-action: none; user-select: none; }
+        canvas { position: absolute; top: 0; left: 0; z-index: 1; }
+        
+        #login-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; z-index: 1000; background: #000; }
+        .login-panel { background: rgba(255,255,255,0.95); padding: 30px; border-radius: 30px; text-align: center; width: 85%; max-width: 320px; }
+        input { padding: 15px; border-radius: 12px; border: 2px solid #eee; width: 100%; box-sizing: border-box; margin-bottom: 20px; text-align: center; font-size: 18px; outline: none; }
+        .login-panel button { background: #222; color: white; border: none; padding: 15px; border-radius: 12px; width: 100%; font-weight: bold; cursor: pointer; }
+
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; display: none; flex-direction: column; align-items: center; justify-content: center; }
+        .main-title { color: white; font-size: clamp(24px, 8vw, 40px); font-weight: bold; margin-bottom: 15px; text-align: center; text-shadow: 0 0 15px white; }
+        .balance-box { color: white; font-size: 20px; margin-bottom: 25px; background: rgba(255,255,255,0.1); padding: 10px 20px; border-radius: 20px; border: 1px solid white; }
+        .menu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; width: 90%; max-width: 450px; }
+        .btn { background: rgba(255, 255, 255, 0.1); border: 2px solid white; color: white; padding: 20px 5px; border-radius: 15px; cursor: pointer; text-align: center; font-weight: bold; font-size: 14px; backdrop-filter: blur(10px); }
+
+        .overlay { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.98); padding: 20px; border-radius: 25px; border: 2px solid white; z-index: 200; display: none; text-align: center; width: 90vw; max-width: 400px; color: white; }
+        .close-btn { margin-top: 15px; padding: 8px 15px; border-radius: 10px; border: none; background: white; font-weight: bold; cursor: pointer; }
+
+        .m-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
+        .card { aspect-ratio: 3/4; cursor: pointer; position: relative; transform-style: preserve-3d; transition: 0.5s; }
+        .card.flipped { transform: rotateY(180deg); }
+        .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 8px; border: 1px solid white; display: flex; align-items: center; justify-content: center; }
+        .card-back { background: #222; }
+        .card-front { transform: rotateY(180deg); overflow: hidden; }
+        .card-front img { width: 100%; height: 100%; object-fit: cover; }
+
+        #catch-area { width: 100%; height: 320px; background: #111; position: relative; overflow: hidden; border-radius: 15px; margin: 10px 0; border: 1px solid #333; }
+        .target { position: absolute; width: 50px; height: 50px; border-radius: 50%; border: 2px solid white; overflow: hidden; }
+        .target img { width: 100%; height: 100%; object-fit: cover; }
+
+        #photo-clicker { width: 140px; height: 140px; margin: 15px auto; cursor: pointer; border-radius: 50%; border: 4px solid white; overflow: hidden; transition: 0.1s; display: block; }
+        #photo-clicker img { width: 100%; height: 100%; object-fit: cover; }
+        .bar { width: 100%; height: 12px; background: #333; border-radius: 10px; overflow: hidden; margin-top: 10px; }
+        #fill { width: 0%; height: 100%; background: #ff4d4d; transition: width 0.1s; }
+
+        #maze { width: 280px; height: 280px; background: #111; margin: 10px auto; position: relative; border: 2px solid #555; touch-action: none; }
+        .wall { position: absolute; background: white; box-shadow: 0 0 5px white; }
+        #dot { position: absolute; width: 18px; height: 18px; background: #00f0ff; border-radius: 50%; box-shadow: 0 0 10px #00f0ff; z-index: 10; }
+
+        #special-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; color: black; padding: 25px; border-radius: 25px; text-align: center; display: none; z-index: 3000; box-shadow: 0 0 40px white; }
+        #m-ctrl { position: fixed; top: 20px; right: 20px; z-index: 1100; width: 44px; height: 44px; background: rgba(255,255,255,0.2); border: 1px solid white; border-radius: 50%; display: none; align-items: center; justify-content: center; color: white; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<audio id="bg-audio" loop>
+    <source src="https://ia800904.us.archive.org/21/items/JingleBells_201602/Jingle%20Bells.mp3" type="audio/mpeg">
+</audio>
+<div id="m-ctrl" onclick="toggleM()">🔊</div>
+
+<div id="login-screen">
+    <div class="login-panel">
+        <h2>ВХОД</h2>
+        <input type="password" id="pw" placeholder="Пароль">
+        <button onclick="doLogin()">ВОЙТИ</button>
+    </div>
+</div>
+
+<canvas id="snow"></canvas>
+<div id="ui-layer">
+    <div class="main-title">ИГРЫ ДЛЯ ЛЮБИМОЙ</div>
+    <div class="balance-box">Баланс: <span id="bal">0</span> ПБ</div>
+    <div class="menu-grid">
+        <div class="btn" onclick="openG1()">ИГРА 1<br>Фото-пары</div>
+        <div class="btn" onclick="openG2()">ИГРА 2<br>Ловля фото</div>
+        <div class="btn" onclick="openG3()">ИГРА 3<br>Распаковка</div>
+        <div class="btn" onclick="openG4()">ИГРА 4<br>Лабиринт</div>
+    </div>
+</div>
+
+<div id="ov1" class="overlay"><h3>НАЙДИ ПАРЫ</h3><div class="m-grid" id="g1-grid"></div><button class="close-btn" onclick="closeAll()">ЗАКРЫТЬ</button></div>
+<div id="ov2" class="overlay"><h3>ЛОВИ ФОТО</h3><div id="catch-area"></div><p id="c-count">Собрано: 0</p><button class="close-btn" onclick="stopG2()">ЗАКРЫТЬ</button></div>
+<div id="ov3" class="overlay">
+    <h3 style="font-size: 15px;">ЧЕМ БОЛЬШЕ ЛЮБИШЬ — ТЕМ БЫСТРЕЕ ЖМИ!</h3>
+    <p id="t3">Время: 10</p>
+    <div id="photo-clicker" onpointerdown="tapG()"><img src="img/02.jpg"></div>
+    <div class="bar"><div id="fill"></div></div>
+</div>
+<div id="ov4" class="overlay"><h3>ДОЙДИ ДО ❤️</h3><div id="maze"><div id="dot"></div><div id="goal" style="position:absolute; bottom:10px; right:10px; font-size:24px;">❤️</div></div><button class="close-btn" onclick="closeAll()">ЗАКРЫТЬ</button></div>
+
+<div id="special-popup">
+    <div style="font-size:50px;">🤗</div>
+    <div style="font-size:24px; font-weight:bold; margin-top:10px;">миленькие мои</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script>
+let money = 0, g2Int, taps = 0, timer3;
+const audio = document.getElementById('bg-audio');
+
+function doLogin() {
+    if(document.getElementById('pw').value === '123' || document.getElementById('pw').value === 'love') {
+        document.getElementById('login-screen').style.display='none';
+        document.getElementById('ui-layer').style.display='flex';
+        document.getElementById('m-ctrl').style.display='flex';
+        audio.play().catch(() => {});
+    } else { alert("Неверно"); }
+}
+
+function toggleM() {
+    if(audio.paused) { audio.play(); document.getElementById('m-ctrl').innerText='🔊'; }
+    else { audio.pause(); document.getElementById('m-ctrl').innerText='🔇'; }
+}
+
+// СНЕГ
+const canvas = document.getElementById('snow'), ctx = canvas.getContext('2d');
+let w = canvas.width = innerWidth, h = canvas.height = innerHeight;
+const flakes = Array.from({length: 120}, () => ({ x: Math.random()*w, y: Math.random()*h, r: Math.random()*2+1, v: Math.random()*1+0.5 }));
+function draw() {
+    ctx.clearRect(0,0,w,h); ctx.fillStyle="white";
+    flakes.forEach(f => { f.y += f.v; if(f.y > h) f.y = -10; ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, Math.PI*2); ctx.fill(); });
+    requestAnimationFrame(draw);
+}
+draw();
+
+function openG1() {
+    closeAll(); document.getElementById('ov1').style.display='block';
+    const grid = document.getElementById('g1-grid'); grid.innerHTML = '';
+    const imgs = ['img/1.jpeg', 'img/1.jpeg', 'img/2.jpeg', 'img/2.jpeg', 'img/3.jpeg', 'img/3.jpeg', 'img/4.jpeg', 'img/4.jpeg'].sort(() => Math.random() - 0.5);
+    let flipped = [];
+    imgs.forEach(src => {
+        const c = document.createElement('div'); c.className = 'card';
+        c.innerHTML = `<div class="card-face card-back">❄️</div><div class="card-face card-front"><img src="${src}"></div>`;
+        c.onclick = () => {
+            if(flipped.length < 2 && !c.classList.contains('flipped')) {
+                c.classList.add('flipped'); flipped.push(c);
+                if(flipped.length === 2) {
+                    if(flipped[0].querySelector('img').src === flipped[1].querySelector('img').src) {
+                        money += 20; updateBal(); flipped = [];
+                        if(document.querySelectorAll('.flipped').length === 8) setTimeout(closeAll, 1000);
+                    } else { setTimeout(() => { flipped.forEach(i=>i.classList.remove('flipped')); flipped=[]; }, 600); }
+                }
+            }
+        };
+        grid.appendChild(c);
+    });
+}
+
+function openG2() {
+    closeAll(); document.getElementById('ov2').style.display='block';
+    const area = document.getElementById('catch-area'); area.innerHTML = '';
+    let count = 0;
+    g2Int = setInterval(() => {
+        const t = document.createElement('div'); t.className = 'target';
+        t.style.left = Math.random()*85+'%'; t.style.top = '-60px';
+        t.innerHTML = `<img src="img/5.jpeg">`; area.appendChild(t);
+        gsap.to(t, { y: 380, duration: 2.2, ease:"none", onComplete: () => t.remove() });
+        t.onpointerdown = () => { money += 5; updateBal(); count++; t.remove(); document.getElementById('c-count').innerText=`Собрано: ${count}`; };
+    }, 850);
+}
+function stopG2() { clearInterval(g2Int); closeAll(); }
+
+function openG3() {
+    closeAll(); taps = 0; document.getElementById('ov3').style.display='block';
+    document.getElementById('fill').style.width = '0%';
+    let left = 10; document.getElementById('t3').innerText = `Время: ${left}`;
+    timer3 = setInterval(() => {
+        left--; document.getElementById('t3').innerText = `Время: ${left}`;
+        if(left <= 0) { clearInterval(timer3); if(taps < 40) { closeAll(); alert("Быстрее! ❤️"); } }
+    }, 1000);
+}
+function tapG() {
+    if(taps >= 40) return;
+    taps++; document.getElementById('fill').style.width = (taps/40)*100 + '%';
+    if(taps >= 40) {
+        clearInterval(timer3); money += 100; updateBal(); document.getElementById('ov3').style.display='none';
+        const p = document.getElementById('special-popup'); p.style.display = 'block';
+        gsap.fromTo(p, {scale:0, opacity:0}, {scale:1, opacity:1, duration:0.5});
+        setTimeout(() => { gsap.to(p, {opacity:0, scale:0, onComplete:()=>p.style.display='none'}); }, 3000);
+    }
+}
+
+const dot = document.getElementById('dot'), maze = document.getElementById('maze');
+function openG4() {
+    closeAll(); document.getElementById('ov4').style.display='block';
+    dot.style.left = '5px'; dot.style.top = '5px';
+    maze.querySelectorAll('.wall').forEach(w=>w.remove());
+    [{t:60,l:0,w:200,h:10},{t:130,l:80,w:200,h:10},{t:200,l:0,w:200,h:10}].forEach(d=>{
+        const w = document.createElement('div'); w.className='wall';
+        Object.assign(w.style, {top:d.t+'px', left:d.l+'px', width:d.w+'px', height:d.h+'px'});
+        maze.appendChild(w);
+    });
+}
+maze.onpointermove = (e) => {
+    const r = maze.getBoundingClientRect();
+    const x = (e.clientX || (e.touches && e.touches[0].clientX)) - r.left - 10;
+    const y = (e.clientY || (e.touches && e.touches[0].clientY)) - r.top - 10;
+    if(x>0 && x<260 && y>0 && y<260) {
+        dot.style.left = x+'px'; dot.style.top = y+'px';
+        if(x>230 && y>230) { money += 150; updateBal(); closeAll(); }
+    }
+};
+
+function closeAll() {
+    document.querySelectorAll('.overlay').forEach(o => o.style.display='none');
+    clearInterval(g2Int); clearInterval(timer3);
+}
+function updateBal() { document.getElementById('bal').innerText = money; }
+window.onresize = () => { w = canvas.width = innerWidth; h = canvas.height = innerHeight; };
+</script>
+</body>
+</html>
